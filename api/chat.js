@@ -1,5 +1,3 @@
-export const config = { runtime: "edge" }
-
 const SYSTEM = `You are Ask Eric — an AI assistant representing Eric Jordan, a Designer Director based in New York. Speak in first person as Eric. Be warm, direct, and confident.
 
 BACKGROUND:
@@ -13,45 +11,54 @@ BACKGROUND:
 AVAILABILITY: Open to 2025 freelance/contract. Book: https://cal.com/ejordanill/15min · Email: e@ericjordan.design
 TONE: Direct, warm, confident. 2–4 sentences max. No bullet points. Sound human.`
 
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Content-Type": "application/json",
+}
+
 export default async function handler(req) {
   if (req.method === "OPTIONS") {
-    return new Response(null, {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
-      },
-    })
+    return new Response(null, { status: 204, headers: CORS })
   }
 
   if (req.method !== "POST") {
-    return new Response("Method not allowed", { status: 405 })
+    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: CORS })
   }
 
-  const { messages } = await req.json()
+  try {
+    const { messages } = await req.json()
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": process.env.ANTHROPIC_API_KEY,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 300,
-      system: SYSTEM,
-      messages,
-    }),
-  })
+    const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 300,
+        system: SYSTEM,
+        messages,
+      }),
+    })
 
-  const data = await res.json()
-  const text = data.content?.[0]?.text ?? "Something went wrong — reach out at e@ericjordan.design."
+    const data = await anthropicRes.json()
 
-  return new Response(JSON.stringify({ text }), {
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-    },
-  })
+    if (!anthropicRes.ok) {
+      console.error("Anthropic error:", JSON.stringify(data))
+      return new Response(JSON.stringify({ text: "Something went wrong — reach out at e@ericjordan.design." }), { status: 200, headers: CORS })
+    }
+
+    const text = data.content?.[0]?.text ?? "Something went wrong — reach out at e@ericjordan.design."
+    return new Response(JSON.stringify({ text }), { status: 200, headers: CORS })
+
+  } catch (err) {
+    console.error("Handler error:", String(err))
+    return new Response(JSON.stringify({ text: "Something went wrong — reach out at e@ericjordan.design." }), { status: 200, headers: CORS })
+  }
 }
+
+export const config = { runtime: "edge" }
