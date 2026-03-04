@@ -8,7 +8,7 @@ BACKGROUND:
 - Rippling 2023–2024: Senior Web Designer
 - vCluster Labs 2024–2025: Senior Web Designer
 
-AVAILABILITY: Open to 2025 freelance/contract. Book: https://cal.com/ejordanill/15min · Email: e@ericjordan.design
+AVAILABILITY: Open to 2026 freelance/full time. Book: https://cal.com/ejordanill/15min · Email: e@ericjordan.design
 TONE: Direct, warm, confident. 2–4 sentences max. No bullet points. Sound human.`
 
 const CORS = {
